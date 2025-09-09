@@ -16,7 +16,7 @@ const BlockProtocolVersion = 1
 // 协议常量
 const (
 	BlockMagic      = 0x424C4F43        // "BLOC" in hex
-	BlockHeaderSize = 160               // 固定160字节头部 (原64 + 增加96字节路径空间)
+	BlockHeaderSize = 168               // 固定168字节头部 (4+1+1+8+4+128+1+1+2+8+4+4=166，向上对齐到8字节边界)
 	MaxBlockSize    = 100 * 1024 * 1024 // 最大100MB块大小
 )
 

@@ -26,6 +26,9 @@ type DataPlaneForwarder struct {
 	connectionManagers map[string]*hybrid.UnifiedConnectionManager
 	connectionConfig   *hybrid.UnifiedConnectionConfig
 
+	// 数据处理组件
+	blockServer *protocol.BlockProtocolServer
+
 	// 统计信息
 	totalConnections  int64
 	activeConnections int64
@@ -70,6 +73,7 @@ func NewDataPlaneForwarder(nodeAddress, listenPort string) *DataPlaneForwarder {
 		listenPort:         listenPort,
 		connectionManagers: make(map[string]*hybrid.UnifiedConnectionManager),
 		connectionConfig:   config,
+		blockServer:        protocol.NewBlockProtocolServer(),
 	}
 }
 
@@ -156,49 +160,53 @@ func (dpf *DataPlaneForwarder) handleConnection(clientConn net.Conn) {
 
 	log.Debugf("Handling connection from %s", clientConn.RemoteAddr())
 
-	// 读取数据
-	buffer := make([]byte, 64*1024) // 64KB缓冲区
-	n, err := clientConn.Read(buffer)
-	if err != nil {
-		log.Errorf("Failed to read from client: %v", err)
-		atomic.AddInt64(&dpf.errorCount, 1)
-		return
+	// 使用缓冲区机制处理TCP流
+	buffer := make([]byte, 64*1024) // 64KB读取缓冲区
+
+	for {
+		// 从连接读取数据
+		n, err := clientConn.Read(buffer)
+		if err != nil {
+			if err.Error() != "EOF" {
+				log.Errorf("Failed to read from client: %v", err)
+				atomic.AddInt64(&dpf.errorCount, 1)
+			}
+			break
+		}
+
+		if n == 0 {
+			continue
+		}
+
+		// 将数据放入协议服务器的缓冲区
+		atomic.AddInt64(&dpf.totalBytes, int64(n))
+
+		// 处理接收到的数据，可能得到多个完整的数据块
+		blocks, err := dpf.blockServer.ProcessIncomingData(buffer[:n])
+		if err != nil {
+			log.Errorf("Failed to process incoming data: %v", err)
+			atomic.AddInt64(&dpf.errorCount, 1)
+			continue
+		}
+
+		// 处理每个完整的数据块
+		for _, block := range blocks {
+			if err := dpf.processDataBlock(block); err != nil {
+				log.Errorf("Failed to process data block %d: %v", block.Header.BlockID, err)
+				atomic.AddInt64(&dpf.errorCount, 1)
+			} else {
+				atomic.AddInt64(&dpf.totalForwards, 1)
+				log.Debugf("Successfully processed data block %d from %s",
+					block.Header.BlockID, clientConn.RemoteAddr())
+			}
+		}
 	}
-
-	data := buffer[:n]
-	atomic.AddInt64(&dpf.totalBytes, int64(n))
-
-	// 解析数据块
-	if err := dpf.processDataBlock(data); err != nil {
-		log.Errorf("Failed to process data block: %v", err)
-		atomic.AddInt64(&dpf.errorCount, 1)
-		return
-	}
-
-	atomic.AddInt64(&dpf.totalForwards, 1)
-	log.Debugf("Successfully processed data block from %s", clientConn.RemoteAddr())
 }
 
 // processDataBlock 处理数据块
-func (dpf *DataPlaneForwarder) processDataBlock(data []byte) error {
-	// 检查数据长度
-	if len(data) < protocol.BlockHeaderSize {
-		return fmt.Errorf("data too short: %d < %d", len(data), protocol.BlockHeaderSize)
-	}
-
-	// 解析头部
-	header, err := protocol.DeserializeHeader(data[:protocol.BlockHeaderSize])
-	if err != nil {
-		return fmt.Errorf("failed to deserialize header: %v", err)
-	}
-
-	// 验证数据完整性
-	totalSize := protocol.BlockHeaderSize + int(header.BlockSize)
-	if len(data) < totalSize {
-		return fmt.Errorf("incomplete data: expected %d, got %d", totalSize, len(data))
-	}
-
-	// 提取路径信息
+func (dpf *DataPlaneForwarder) processDataBlock(block *protocol.DataBlock) error {
+	// 提取头部和路径信息
+	header := &block.Header
 	pathString := header.RouteInfo.TargetAddress
 
 	log.Debugf("Processing block: ID=%d, path=%s, current_node=%s",
@@ -209,10 +217,16 @@ func (dpf *DataPlaneForwarder) processDataBlock(data []byte) error {
 		return fmt.Errorf("invalid path: %v", err)
 	}
 
+	// 序列化数据块用于转发
+	serializedData, err := block.Serialize()
+	if err != nil {
+		return fmt.Errorf("failed to serialize block: %v", err)
+	}
+
 	// 检查是否到达终点
 	if protocol.IsPathComplete(pathString, dpf.nodeAddress) {
 		log.Infof("Reached final destination: block_id=%d", header.BlockID)
-		return dpf.deliverToFinalTarget(data[:totalSize], header)
+		return dpf.deliverToFinalTarget(serializedData, header)
 	}
 
 	// 获取下一跳
@@ -223,13 +237,13 @@ func (dpf *DataPlaneForwarder) processDataBlock(data []byte) error {
 
 	if nextHop == "" {
 		log.Infof("No next hop, treating as final destination: block_id=%d", header.BlockID)
-		return dpf.deliverToFinalTarget(data[:totalSize], header)
+		return dpf.deliverToFinalTarget(serializedData, header)
 	}
 
 	log.Debugf("Forwarding to next hop: %s", nextHop)
 
 	// 转发到下一跳
-	return dpf.forwardToNextHop(data[:totalSize], nextHop, header.BlockID)
+	return dpf.forwardToNextHop(serializedData, nextHop, header.BlockID)
 }
 
 // getOrCreateConnectionManager 获取或创建连接管理器

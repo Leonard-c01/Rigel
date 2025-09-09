@@ -1,0 +1,86 @@
+# 控制平面配置示例
+
+# 通用配置
+common:
+  log_level: "info"
+  log_file: "rigel-controlplane.log"
+  admin_addr: "127.0.0.1:8888"
+  node_id: "proxy-node-1"
+  region: "us-east"
+
+# 监听器配置
+listeners:
+  - name: "data-plane"
+    bind: "0.0.0.0:8080"
+
+# 调度器配置 (可选，用于与外部调度器集成)
+scheduler:
+  address: ""
+  connect_timeout: "30s"
+  request_timeout: "10s"
+  retry_interval: "5s"
+  max_retries: 3
+  heartbeat_interval: "30s"
+
+# 对等节点配置
+peers:
+  - name: "proxy-node-2"
+    address: "192.168.1.50:8080"
+    type: "tcp"
+    region: "us-west"
+  
+  - name: "proxy-node-3"
+    address: "192.168.1.51:8080"
+    type: "tcp"
+    region: "eu-central"
+
+# 控制平面配置
+control_plane:
+  # 节点角色配置
+  is_leader: true                    # 是否为组长节点
+  address: "192.168.1.10:9090"      # 本节点地址
+  
+  # 组长节点配置 (普通节点需要配置)
+  leader_address: ""                 # 本区域组长节点地址 (普通节点必填)
+  leader_nodes:                      # 其他区域组长节点地址列表
+    - "192.168.2.10:9090"           # us-west 区域组长
+    - "192.168.3.10:9090"           # eu-central 区域组长
+  
+  # 同步间隔配置
+  status_report_interval: "5s"       # 状态上报间隔
+  global_sync_interval: "1s"         # 全局状态同步间隔
+  leader_sync_interval: "1s"         # 组长间同步间隔
+  
+  # 超时配置
+  heartbeat_timeout: "30s"           # 心跳超时时间
+  request_timeout: "10s"             # HTTP请求超时时间
+  
+  # API服务配置
+  api_port: ":9090"                  # 控制平面API端口
+
+---
+
+# 普通节点配置示例
+# common:
+#   log_level: "info"
+#   log_file: "rigel-node.log"
+#   admin_addr: "127.0.0.1:8888"
+#   node_id: "proxy-node-2"
+#   region: "us-east"
+# 
+# listeners:
+#   - name: "data-plane"
+#     bind: "0.0.0.0:8080"
+# 
+# control_plane:
+#   is_leader: false                   # 普通节点
+#   address: "192.168.1.20:9090"      # 本节点地址
+#   leader_address: "192.168.1.10:9090"  # 组长节点地址
+#   
+#   # 同步间隔配置
+#   status_report_interval: "5s"
+#   global_sync_interval: "1s"
+#   
+#   # 超时配置
+#   heartbeat_timeout: "30s"
+#   request_timeout: "10s"
