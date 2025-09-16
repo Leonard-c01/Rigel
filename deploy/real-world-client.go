@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"tcp-proxy/internal/protocol"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/protocol"
+	"github.com/rigel/pkg/log"
 )
 
 func main() {

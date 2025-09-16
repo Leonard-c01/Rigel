@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 func init() {
@@ -145,7 +145,7 @@ func TestDataSplitter(t *testing.T) {
 	// 测试权重分发器
 	t.Run("Weighted", func(t *testing.T) {
 		splitter := NewWeightedSplitter()
-		
+
 		// 设置权重
 		splitter.SetWeight("conn1", 0.5)
 		splitter.SetWeight("conn2", 0.3)

@@ -7,15 +7,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // RoundRobinSplitter 轮询数据分发器
 type RoundRobinSplitter struct {
-	strategy    SplitStrategy
-	counter     uint64
-	sequenceID  uint64
-	mu          sync.RWMutex
+	strategy   SplitStrategy
+	counter    uint64
+	sequenceID uint64
+	mu         sync.RWMutex
 }
 
 // NewRoundRobinSplitter 创建轮询分发器
@@ -89,7 +89,7 @@ func (s *RoundRobinSplitter) Split(data []byte, connections []*ManagedConnection
 		}
 	}
 
-	log.Debugf("Split %d bytes into %d segments using round-robin strategy", 
+	log.Debugf("Split %d bytes into %d segments using round-robin strategy",
 		len(data), len(segments))
 
 	return segments, nil
@@ -205,7 +205,7 @@ func (s *WeightedSplitter) Split(data []byte, connections []*ManagedConnection) 
 		}
 	}
 
-	log.Debugf("Split %d bytes into %d segments using weighted strategy", 
+	log.Debugf("Split %d bytes into %d segments using weighted strategy",
 		len(data), len(segments))
 
 	return segments, nil
@@ -277,7 +277,7 @@ func (s *LeastConnSplitter) Split(data []byte, connections []*ManagedConnection)
 		IsLast:       true,
 	}
 
-	log.Debugf("Split %d bytes to connection %s using least-conn strategy", 
+	log.Debugf("Split %d bytes to connection %s using least-conn strategy",
 		len(data), bestConn.ID)
 
 	return []*DataSegment{segment}, nil
@@ -347,7 +347,7 @@ func (s *RandomSplitter) Split(data []byte, connections []*ManagedConnection) ([
 		IsLast:       true,
 	}
 
-	log.Debugf("Split %d bytes to connection %s using random strategy", 
+	log.Debugf("Split %d bytes to connection %s using random strategy",
 		len(data), selectedConn.ID)
 
 	return []*DataSegment{segment}, nil

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net"
 	"time"
-	"tcp-proxy/internal/dataplane"
-	"tcp-proxy/internal/protocol"
-	"tcp-proxy/pkg/log"
+
+	"github.com/rigel/internal/dataplane"
+	"github.com/rigel/internal/protocol"
+	"github.com/rigel/pkg/log"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 	// 创建测试数据块
 	client := protocol.NewBlockProtocolClient()
 	testData := []byte("Hello, buffered forwarding!")
-	
+
 	// 创建数据块，路径指向下一跳
 	block, err := client.EncodeDataWithRoute(testData, "127.0.0.1:8081->127.0.0.1:8082", 1)
 	if err != nil {
@@ -142,7 +143,7 @@ func testMultipleBlocks(client *protocol.BlockProtocolClient) error {
 
 	var allData []byte
 	for i, msg := range testMessages {
-		block, err := client.EncodeDataWithRoute([]byte(msg), 
+		block, err := client.EncodeDataWithRoute([]byte(msg),
 			fmt.Sprintf("127.0.0.1:808%d", i+1), uint8(i+1))
 		if err != nil {
 			return fmt.Errorf("创建数据块%d失败: %v", i+1, err)

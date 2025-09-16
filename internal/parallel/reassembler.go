@@ -7,18 +7,18 @@ import (
 	"sync"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // SequentialReassembler 顺序数据重组器
 type SequentialReassembler struct {
-	segments       map[uint64]*DataSegment
-	expectedSeq    uint64
-	buffer         *bytes.Buffer
-	mu             sync.RWMutex
-	stats          *ReassemblerStats
-	timeout        time.Duration
-	lastActivity   time.Time
+	segments     map[uint64]*DataSegment
+	expectedSeq  uint64
+	buffer       *bytes.Buffer
+	mu           sync.RWMutex
+	stats        *ReassemblerStats
+	timeout      time.Duration
+	lastActivity time.Time
 }
 
 // NewSequentialReassembler 创建顺序重组器
@@ -62,7 +62,7 @@ func (r *SequentialReassembler) AddSegment(segment *DataSegment) error {
 	r.segments[segment.SequenceID] = segment
 	r.stats.PendingSegments = len(r.segments)
 
-	log.Debugf("Added segment: seq=%d, conn=%s, len=%d, isLast=%v", 
+	log.Debugf("Added segment: seq=%d, conn=%s, len=%d, isLast=%v",
 		segment.SequenceID, segment.ConnectionID, segment.Length, segment.IsLast)
 
 	// 尝试重组连续的段
@@ -126,7 +126,7 @@ func (r *SequentialReassembler) tryReassemble() {
 		delete(r.segments, r.expectedSeq)
 		r.expectedSeq++
 
-		log.Debugf("Reassembled segment: seq=%d, buffer_size=%d", 
+		log.Debugf("Reassembled segment: seq=%d, buffer_size=%d",
 			segment.SequenceID, r.buffer.Len())
 
 		// 如果这是最后一个段，标记消息完成
@@ -154,12 +154,12 @@ func (r *SequentialReassembler) handleOutOfOrder() {
 	// 如果最小的序列号比期望的大，说明有段丢失
 	if len(sequences) > 0 && sequences[0] > r.expectedSeq {
 		r.stats.OutOfOrderCount++
-		log.Warnf("Out of order segments detected: expected=%d, got=%d", 
+		log.Warnf("Out of order segments detected: expected=%d, got=%d",
 			r.expectedSeq, sequences[0])
 
 		// 简单策略：跳过丢失的段，继续处理
 		if time.Since(r.lastActivity) > r.timeout {
-			log.Warnf("Timeout waiting for segment %d, skipping to %d", 
+			log.Warnf("Timeout waiting for segment %d, skipping to %d",
 				r.expectedSeq, sequences[0])
 			r.expectedSeq = sequences[0]
 		}
@@ -175,15 +175,15 @@ func (r *SequentialReassembler) IsTimeout() bool {
 
 // BufferedReassembler 缓冲数据重组器（支持乱序处理）
 type BufferedReassembler struct {
-	segments       map[uint64]*DataSegment
+	segments        map[uint64]*DataSegment
 	orderedSegments []uint64
-	buffer         *bytes.Buffer
-	mu             sync.RWMutex
-	stats          *ReassemblerStats
-	maxBufferSize  int
-	timeout        time.Duration
-	lastActivity   time.Time
-	completed      bool
+	buffer          *bytes.Buffer
+	mu              sync.RWMutex
+	stats           *ReassemblerStats
+	maxBufferSize   int
+	timeout         time.Duration
+	lastActivity    time.Time
+	completed       bool
 }
 
 // NewBufferedReassembler 创建缓冲重组器
@@ -228,7 +228,7 @@ func (r *BufferedReassembler) AddSegment(segment *DataSegment) error {
 
 	// 检查缓冲区大小
 	if r.buffer.Len()+segment.Length > r.maxBufferSize {
-		return fmt.Errorf("buffer overflow: current=%d, adding=%d, max=%d", 
+		return fmt.Errorf("buffer overflow: current=%d, adding=%d, max=%d",
 			r.buffer.Len(), segment.Length, r.maxBufferSize)
 	}
 
@@ -237,7 +237,7 @@ func (r *BufferedReassembler) AddSegment(segment *DataSegment) error {
 	r.orderedSegments = append(r.orderedSegments, segment.SequenceID)
 	r.stats.PendingSegments = len(r.segments)
 
-	log.Debugf("Added segment to buffer: seq=%d, conn=%s, len=%d", 
+	log.Debugf("Added segment to buffer: seq=%d, conn=%s, len=%d",
 		segment.SequenceID, segment.ConnectionID, segment.Length)
 
 	// 检查是否可以完成重组
@@ -312,8 +312,8 @@ func (r *BufferedReassembler) performReassembly() {
 
 	r.completed = true
 	r.stats.CompletedMessages++
-	
-	log.Infof("Reassembly completed: segments=%d, total_size=%d", 
+
+	log.Infof("Reassembly completed: segments=%d, total_size=%d",
 		len(r.orderedSegments), r.buffer.Len())
 }
 

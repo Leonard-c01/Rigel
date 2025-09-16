@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 
 	"github.com/xtaci/smux"
 )

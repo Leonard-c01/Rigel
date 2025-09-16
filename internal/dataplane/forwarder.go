@@ -8,9 +8,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"tcp-proxy/internal/hybrid"
-	"tcp-proxy/internal/protocol"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/hybrid"
+	"github.com/rigel/internal/protocol"
+	"github.com/rigel/pkg/log"
 )
 
 // DataPlaneForwarder 数据面转发器

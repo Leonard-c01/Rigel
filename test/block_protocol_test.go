@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"tcp-proxy/internal/protocol"
+	"github.com/rigel/internal/protocol"
 )
 
 func TestBlockProtocolBasic() {

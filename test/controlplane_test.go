@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"tcp-proxy/internal/controlplane"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/controlplane"
+	"github.com/rigel/pkg/log"
 )
 
 // TestControlPlaneIntegration 测试控制平面集成功能

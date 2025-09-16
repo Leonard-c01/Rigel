@@ -7,22 +7,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // TCPParallelConnection TCP并行连接管理器实现
 type TCPParallelConnection struct {
-	target       string
-	config       *ConnectionConfig
-	pool         ConnectionPool
-	splitter     DataSplitter
-	reassembler  DataReassembler
-	
+	target      string
+	config      *ConnectionConfig
+	pool        ConnectionPool
+	splitter    DataSplitter
+	reassembler DataReassembler
+
 	// 统计信息
-	totalBytesSent int64
-	totalBytesRecv int64
+	totalBytesSent   int64
+	totalBytesRecv   int64
 	connectionErrors int64
-	
+
 	// 控制
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -91,7 +91,7 @@ func (p *TCPParallelConnection) Send(data []byte) error {
 		return fmt.Errorf("failed to split data: %v", err)
 	}
 
-	log.Debugf("Sending %d bytes across %d connections (%d segments)", 
+	log.Debugf("Sending %d bytes across %d connections (%d segments)",
 		len(data), len(connections), len(segments))
 
 	// 并行发送数据段
@@ -278,7 +278,7 @@ func (p *TCPParallelConnection) receiveFromConnection(conn *ManagedConnection, s
 	defer p.pool.ReturnConnection(conn)
 
 	buffer := make([]byte, p.config.BufferSize)
-	
+
 	// 设置读取超时
 	conn.Conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	defer conn.Conn.SetReadDeadline(time.Time{})
@@ -318,12 +318,12 @@ func (p *TCPParallelConnection) receiveFromConnection(conn *ManagedConnection, s
 // calculateThroughput 计算平均吞吐量
 func (p *TCPParallelConnection) calculateThroughput() float64 {
 	totalBytes := atomic.LoadInt64(&p.totalBytesSent) + atomic.LoadInt64(&p.totalBytesRecv)
-	
+
 	// 简化计算：假设运行时间为1秒
 	// 实际实现中应该记录开始时间
-	throughputBps := float64(totalBytes * 8) // 转换为bits
+	throughputBps := float64(totalBytes * 8)        // 转换为bits
 	throughputMbps := throughputBps / (1024 * 1024) // 转换为Mbps
-	
+
 	return throughputMbps
 }
 
@@ -331,7 +331,7 @@ func (p *TCPParallelConnection) calculateThroughput() float64 {
 func (p *TCPParallelConnection) SetSplitStrategy(strategy SplitStrategy) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	
+
 	p.splitter = NewDataSplitter(strategy)
 	log.Infof("Changed split strategy to %s", strategy)
 }

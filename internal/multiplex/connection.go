@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // TCPMultiplexConnection TCP多路复用连接实现

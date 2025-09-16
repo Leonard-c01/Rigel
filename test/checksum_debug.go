@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"hash/crc32"
-	"tcp-proxy/internal/protocol"
+
+	"github.com/rigel/internal/protocol"
 )
 
 func main() {

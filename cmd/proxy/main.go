@@ -7,10 +7,11 @@ import (
 	"syscall"
 	"time"
 
-	"tcp-proxy/config"
-	"tcp-proxy/internal/controlplane"
-	"tcp-proxy/internal/dataplane"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/controlplane"
+	"github.com/rigel/internal/dataplane"
+	"github.com/rigel/pkg/log"
+
+	"github.com/rigel/config"
 )
 
 var (

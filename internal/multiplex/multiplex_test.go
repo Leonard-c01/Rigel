@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 func init() {

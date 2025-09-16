@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"tcp-proxy/config"
-	"tcp-proxy/internal/proxy"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/config"
+	"github.com/rigel/internal/proxy"
+	"github.com/rigel/pkg/log"
 )
 
 func TestMultiplexProxyIntegration(t *testing.T) {
@@ -126,9 +126,9 @@ func TestConnectionModeSelection(t *testing.T) {
 		dataSize int
 		expected string
 	}{
-		{"Small Data", 100, "multiplex"}, // 小数据应该使用多路复用
-		{"Medium Data", 1024, "multiplex"}, // 中等数据
-		{"Large Data", 64*1024, "parallel"}, // 大数据应该使用并行连接
+		{"Small Data", 100, "multiplex"},      // 小数据应该使用多路复用
+		{"Medium Data", 1024, "multiplex"},    // 中等数据
+		{"Large Data", 64 * 1024, "parallel"}, // 大数据应该使用并行连接
 	}
 
 	for _, tc := range testCases {

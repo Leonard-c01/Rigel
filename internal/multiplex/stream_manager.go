@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // TCPStreamManager TCP流管理器实现

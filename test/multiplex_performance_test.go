@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"tcp-proxy/config"
-	"tcp-proxy/internal/proxy"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/config"
+	"github.com/rigel/internal/proxy"
+	"github.com/rigel/pkg/log"
 )
 
 func TestConnectionModePerformance(t *testing.T) {
@@ -92,12 +92,12 @@ func TestConcurrentConnectionsPerformance(t *testing.T) {
 
 // PerformanceResult 性能测试结果
 type PerformanceResult struct {
-	TransferCount   int64
-	TotalBytes      int64
-	Duration        time.Duration
-	ThroughputMBps  float64
-	AvgLatencyMs    float64
-	ErrorCount      int64
+	TransferCount  int64
+	TotalBytes     int64
+	Duration       time.Duration
+	ThroughputMBps float64
+	AvgLatencyMs   float64
+	ErrorCount     int64
 }
 
 func testSingleConnectionPerformance(t *testing.T, duration time.Duration, testData []byte) *PerformanceResult {
@@ -113,7 +113,7 @@ func testSingleConnectionPerformance(t *testing.T, duration time.Duration, testD
 
 	for time.Since(start) < duration {
 		latencyStart := time.Now()
-		
+
 		conn, err := net.DialTimeout("tcp", serverAddr, 5*time.Second)
 		if err != nil {
 			errorCount++

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // TCPConnectionPool TCP连接池实现
@@ -135,7 +135,7 @@ func (p *TCPConnectionPool) ReturnConnection(conn *ManagedConnection) {
 	}
 
 	conn.SetStatus(ConnectionStatusIdle)
-	
+
 	select {
 	case p.available <- conn:
 		// 成功归还

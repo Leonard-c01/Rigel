@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"tcp-proxy/config"
-	"tcp-proxy/internal/proxy"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/config"
+	"github.com/rigel/internal/proxy"
+	"github.com/rigel/pkg/log"
 )
 
 func TestParallelProxyIntegration(t *testing.T) {

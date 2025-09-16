@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"tcp-proxy/internal/protocol"
+	"github.com/rigel/internal/protocol"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func testBasicProtocol() {
 		log.Fatalf("Failed to encode data block: %v", err)
 	}
 
-	fmt.Printf("✅ 成功创建数据块: ID=%d, Size=%d, Target=%s\n", 
+	fmt.Printf("✅ 成功创建数据块: ID=%d, Size=%d, Target=%s\n",
 		block.Header.BlockID, block.Header.BlockSize, block.Header.RouteInfo.TargetAddress)
 
 	// 序列化数据块
@@ -44,7 +44,7 @@ func testBasicProtocol() {
 		log.Fatalf("Failed to serialize block: %v", err)
 	}
 
-	fmt.Printf("✅ 序列化成功: 总大小=%d字节 (头部=%d + 数据=%d)\n", 
+	fmt.Printf("✅ 序列化成功: 总大小=%d字节 (头部=%d + 数据=%d)\n",
 		len(serialized), 64, len(testData))
 
 	// 创建服务端处理器
@@ -61,7 +61,7 @@ func testBasicProtocol() {
 	}
 
 	receivedBlock := blocks[0]
-	fmt.Printf("✅ 成功解析数据块: ID=%d, Target=%s\n", 
+	fmt.Printf("✅ 成功解析数据块: ID=%d, Target=%s\n",
 		receivedBlock.Header.BlockID, receivedBlock.Header.RouteInfo.TargetAddress)
 
 	// 验证数据完整性
@@ -139,21 +139,21 @@ func testMultipleBlocks() {
 		expectedPriority := testCases[i].priority
 
 		if string(block.Data) != expectedData {
-			log.Fatalf("Block %d data mismatch: expected %s, got %s", 
+			log.Fatalf("Block %d data mismatch: expected %s, got %s",
 				i, expectedData, string(block.Data))
 		}
 
 		if block.Header.RouteInfo.TargetAddress != expectedTarget {
-			log.Fatalf("Block %d target mismatch: expected %s, got %s", 
+			log.Fatalf("Block %d target mismatch: expected %s, got %s",
 				i, expectedTarget, block.Header.RouteInfo.TargetAddress)
 		}
 
 		if block.Header.RouteInfo.Priority != expectedPriority {
-			log.Fatalf("Block %d priority mismatch: expected %d, got %d", 
+			log.Fatalf("Block %d priority mismatch: expected %d, got %d",
 				i, expectedPriority, block.Header.RouteInfo.Priority)
 		}
 
-		fmt.Printf("✅ 验证数据块 %d: %s -> %s (优先级=%d)\n", 
+		fmt.Printf("✅ 验证数据块 %d: %s -> %s (优先级=%d)\n",
 			i+1, string(block.Data), block.Header.RouteInfo.TargetAddress, block.Header.RouteInfo.Priority)
 	}
 

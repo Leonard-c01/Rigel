@@ -8,28 +8,28 @@ import (
 	"sync/atomic"
 	"time"
 
-	"tcp-proxy/internal/parallel"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/parallel"
+	"github.com/rigel/pkg/log"
 )
 
 // HybridConnectionConfig 混合连接配置
 type HybridConnectionConfig struct {
 	// 并行连接配置
 	ParallelConfig *parallel.ConnectionConfig `json:"parallel_config"`
-	
+
 	// 多路复用配置
 	MultiplexConfig *MultiplexConfig `json:"multiplex_config"`
-	
+
 	// 混合模式配置
-	Mode                ConnectionMode `json:"mode"`                  // 连接模式
-	BandwidthThreshold  int64         `json:"bandwidth_threshold"`   // 带宽阈值（bps）
-	LatencyThreshold    int           `json:"latency_threshold"`     // 延迟阈值（ms）
-	ConnectionThreshold int           `json:"connection_threshold"`  // 连接数阈值
-	
+	Mode                ConnectionMode `json:"mode"`                 // 连接模式
+	BandwidthThreshold  int64          `json:"bandwidth_threshold"`  // 带宽阈值（bps）
+	LatencyThreshold    int            `json:"latency_threshold"`    // 延迟阈值（ms）
+	ConnectionThreshold int            `json:"connection_threshold"` // 连接数阈值
+
 	// 自动切换配置
-	AutoSwitchEnabled   bool          `json:"auto_switch_enabled"`   // 是否启用自动切换
-	SwitchInterval      time.Duration `json:"switch_interval"`       // 切换检查间隔
-	PerformanceWindow   time.Duration `json:"performance_window"`    // 性能统计窗口
+	AutoSwitchEnabled bool          `json:"auto_switch_enabled"` // 是否启用自动切换
+	SwitchInterval    time.Duration `json:"switch_interval"`     // 切换检查间隔
+	PerformanceWindow time.Duration `json:"performance_window"`  // 性能统计窗口
 }
 
 // DefaultHybridConnectionConfig 默认混合连接配置
@@ -38,9 +38,9 @@ func DefaultHybridConnectionConfig() *HybridConnectionConfig {
 		ParallelConfig:      parallel.DefaultConnectionConfig(),
 		MultiplexConfig:     DefaultMultiplexConfig(),
 		Mode:                ModeAuto,
-		BandwidthThreshold:  5000000,  // 5Mbps
-		LatencyThreshold:    100,      // 100ms
-		ConnectionThreshold: 50,       // 50个并发连接
+		BandwidthThreshold:  5000000, // 5Mbps
+		LatencyThreshold:    100,     // 100ms
+		ConnectionThreshold: 50,      // 50个并发连接
 		AutoSwitchEnabled:   true,
 		SwitchInterval:      30 * time.Second,
 		PerformanceWindow:   5 * time.Minute,
@@ -49,26 +49,26 @@ func DefaultHybridConnectionConfig() *HybridConnectionConfig {
 
 // HybridConnection 混合连接管理器
 type HybridConnection struct {
-	target  string
-	config  *HybridConnectionConfig
-	
+	target string
+	config *HybridConnectionConfig
+
 	// 连接实例
 	parallelConn  parallel.ParallelConnection
 	multiplexConn MultiplexConnection
 	transport     *MultiplexTransport
-	
+
 	// 当前模式
 	currentMode ConnectionMode
-	
+
 	// 性能统计
 	parallelStats  *parallel.ParallelStats
 	multiplexStats *MultiplexStats
-	
+
 	// 统计信息
 	totalBytesSent int64
 	totalBytesRecv int64
 	switchCount    int64
-	
+
 	// 控制
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -317,12 +317,12 @@ func (hc *HybridConnection) selectOptimalMode() ConnectionMode {
 
 // HybridStats 混合连接统计
 type HybridStats struct {
-	CurrentMode     ConnectionMode           `json:"current_mode"`
-	TotalBytesSent  int64                   `json:"total_bytes_sent"`
-	TotalBytesRecv  int64                   `json:"total_bytes_recv"`
-	SwitchCount     int64                   `json:"switch_count"`
-	ParallelStats   *parallel.ParallelStats `json:"parallel_stats,omitempty"`
-	MultiplexStats  *MultiplexStats         `json:"multiplex_stats,omitempty"`
+	CurrentMode    ConnectionMode          `json:"current_mode"`
+	TotalBytesSent int64                   `json:"total_bytes_sent"`
+	TotalBytesRecv int64                   `json:"total_bytes_recv"`
+	SwitchCount    int64                   `json:"switch_count"`
+	ParallelStats  *parallel.ParallelStats `json:"parallel_stats,omitempty"`
+	MultiplexStats *MultiplexStats         `json:"multiplex_stats,omitempty"`
 }
 
 // sendHybrid 混合模式发送
@@ -375,10 +375,10 @@ func (hc *HybridConnection) performanceMonitor() {
 func (hc *HybridConnection) evaluatePerformance() {
 	// 获取当前统计信息
 	stats := hc.GetStats()
-	
+
 	// 根据性能指标决定是否需要切换模式
 	// 这里简化实现，实际应该有更复杂的决策逻辑
-	
+
 	log.Debugf("Performance evaluation: mode=%s, sent=%d, recv=%d, switches=%d",
 		stats.CurrentMode, stats.TotalBytesSent, stats.TotalBytesRecv, stats.SwitchCount)
 }

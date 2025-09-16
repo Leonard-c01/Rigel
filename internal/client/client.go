@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"tcp-proxy/internal/protocol"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/protocol"
+	"github.com/rigel/pkg/log"
 )
 
 // RigelClient Rigel系统的客户端模块

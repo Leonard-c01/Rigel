@@ -8,19 +8,19 @@ import (
 	"sync"
 	"time"
 
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/pkg/log"
 )
 
 // MultiplexTransport 多路复用传输器
 type MultiplexTransport struct {
 	connection MultiplexConnection
 	config     *MultiplexConfig
-	
+
 	// 流池管理
-	streamPool   chan net.Conn
+	streamPool    chan net.Conn
 	activeStreams map[string]net.Conn
-	mu           sync.RWMutex
-	
+	mu            sync.RWMutex
+
 	// 控制
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -111,7 +111,7 @@ func (mt *MultiplexTransport) ReceiveData() ([]byte, error) {
 	}
 
 	data := buffer[:n]
-	
+
 	// 归还流到池中
 	mt.returnStream(stream)
 
@@ -165,7 +165,7 @@ func (mt *MultiplexTransport) ForwardData(clientConn net.Conn) (int64, int64, er
 
 	wg.Wait()
 
-	log.Debugf("Forwarded data: client->server=%d bytes, server->client=%d bytes", 
+	log.Debugf("Forwarded data: client->server=%d bytes, server->client=%d bytes",
 		clientToServer, serverToClient)
 
 	return clientToServer, serverToClient, forwardErr
@@ -299,7 +299,7 @@ func (mt *MultiplexTransport) cleanupStreams() {
 		}
 	}
 
-	log.Debugf("Stream cleanup completed, active streams: %d, pool size: %d", 
+	log.Debugf("Stream cleanup completed, active streams: %d, pool size: %d",
 		len(mt.activeStreams), len(mt.streamPool))
 }
 

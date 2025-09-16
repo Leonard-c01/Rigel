@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"tcp-proxy/internal/protocol"
-	"tcp-proxy/pkg/log"
+	"github.com/rigel/internal/protocol"
+	"github.com/rigel/pkg/log"
 )
 
 // PathEncoder 路径编码器 - 负责将路径信息封装到数据块中
@@ -27,27 +27,27 @@ func (pe *PathEncoder) EncodeWithPath(data []byte, path []string, priority uint8
 	if len(data) == 0 {
 		return nil, fmt.Errorf("empty data")
 	}
-	
+
 	if len(path) == 0 {
 		return nil, fmt.Errorf("empty path")
 	}
-	
+
 	// 生成唯一的块ID
 	pe.blockIDCounter++
 	blockID := pe.blockIDCounter
-	
+
 	// 构建路由信息
 	routeInfo, err := pe.buildRouteInfo(path, priority)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build route info: %v", err)
 	}
-	
+
 	// 创建数据块
 	dataBlock := protocol.CreateDataBlock(blockID, data, *routeInfo)
-	
-	log.Debugf("Encoded data block: ID=%d, size=%d, path=%v, priority=%d", 
+
+	log.Debugf("Encoded data block: ID=%d, size=%d, path=%v, priority=%d",
 		blockID, len(data), path, priority)
-	
+
 	return dataBlock, nil
 }
 
@@ -56,11 +56,11 @@ func (pe *PathEncoder) buildRouteInfo(path []string, priority uint8) (*protocol.
 	if len(path) == 0 {
 		return nil, fmt.Errorf("empty path")
 	}
-	
+
 	// 将路径编码为目标地址字符串
 	// 格式: "hop1,hop2,hop3,target"
 	pathString := strings.Join(path, ",")
-	
+
 	// 构建路由信息
 	routeInfo := &protocol.RouteInfo{
 		TargetAddress: pathString,
@@ -69,12 +69,12 @@ func (pe *PathEncoder) buildRouteInfo(path []string, priority uint8) (*protocol.
 		Flags:         protocol.RouteFlagDirect,
 		Timestamp:     time.Now().Unix(),
 	}
-	
+
 	// 根据路径长度设置标志
 	if len(path) > 1 {
 		routeInfo.Flags |= protocol.RouteFlagMultiPath
 	}
-	
+
 	return routeInfo, nil
 }
 
@@ -83,21 +83,21 @@ func (pe *PathEncoder) EncodeWithComplexPath(data []byte, complexPath *ComplexPa
 	if len(data) == 0 {
 		return nil, fmt.Errorf("empty data")
 	}
-	
+
 	if complexPath == nil {
 		return nil, fmt.Errorf("nil complex path")
 	}
-	
+
 	// 生成唯一的块ID
 	pe.blockIDCounter++
 	blockID := pe.blockIDCounter
-	
+
 	// 将复杂路径序列化为JSON
 	pathJSON, err := json.Marshal(complexPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal complex path: %v", err)
 	}
-	
+
 	// 构建路由信息
 	routeInfo := &protocol.RouteInfo{
 		TargetAddress: string(pathJSON),
@@ -106,38 +106,38 @@ func (pe *PathEncoder) EncodeWithComplexPath(data []byte, complexPath *ComplexPa
 		Flags:         pe.buildFlags(complexPath),
 		Timestamp:     time.Now().Unix(),
 	}
-	
+
 	// 创建数据块
 	dataBlock := protocol.CreateDataBlock(blockID, data, *routeInfo)
-	
-	log.Debugf("Encoded complex data block: ID=%d, size=%d, hops=%d, priority=%d", 
+
+	log.Debugf("Encoded complex data block: ID=%d, size=%d, hops=%d, priority=%d",
 		blockID, len(data), len(complexPath.Hops), complexPath.Priority)
-	
+
 	return dataBlock, nil
 }
 
 // buildFlags 构建标志位
 func (pe *PathEncoder) buildFlags(complexPath *ComplexPath) uint16 {
 	var flags uint16
-	
+
 	// 基础标志
 	flags |= protocol.RouteFlagDirect
-	
+
 	// 多路径标志
 	if len(complexPath.Hops) > 1 {
 		flags |= protocol.RouteFlagMultiPath
 	}
-	
+
 	// 加密标志
 	if complexPath.RequireEncryption {
 		flags |= protocol.RouteFlagEncrypted
 	}
-	
+
 	// 压缩标志
 	if complexPath.RequireCompression {
 		flags |= protocol.RouteFlagCompressed
 	}
-	
+
 	return flags
 }
 
@@ -146,9 +146,9 @@ func (pe *PathEncoder) DecodePathFromBlock(dataBlock *protocol.DataBlock) (*Deco
 	if dataBlock == nil {
 		return nil, fmt.Errorf("nil data block")
 	}
-	
+
 	routeInfo := dataBlock.Header.RouteInfo
-	
+
 	// 尝试解析为简单路径
 	if !strings.HasPrefix(routeInfo.TargetAddress, "{") {
 		// 简单路径格式: "hop1,hop2,hop3"
@@ -161,13 +161,13 @@ func (pe *PathEncoder) DecodePathFromBlock(dataBlock *protocol.DataBlock) (*Deco
 			Flags:    routeInfo.Flags,
 		}, nil
 	}
-	
+
 	// 尝试解析为复杂路径
 	var complexPath ComplexPath
 	if err := json.Unmarshal([]byte(routeInfo.TargetAddress), &complexPath); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal complex path: %v", err)
 	}
-	
+
 	return &DecodedPath{
 		Type:        PathTypeComplex,
 		ComplexPath: &complexPath,
@@ -183,7 +183,7 @@ func (pe *PathEncoder) GetNextHop(dataBlock *protocol.DataBlock, currentHop stri
 	if err != nil {
 		return "", fmt.Errorf("failed to decode path: %v", err)
 	}
-	
+
 	switch decodedPath.Type {
 	case PathTypeSimple:
 		return pe.getNextHopFromSimplePath(decodedPath.Hops, currentHop)
@@ -199,12 +199,12 @@ func (pe *PathEncoder) getNextHopFromSimplePath(hops []string, currentHop string
 	if len(hops) == 0 {
 		return "", fmt.Errorf("empty hops")
 	}
-	
+
 	// 如果当前跳为空，返回第一跳
 	if currentHop == "" {
 		return hops[0], nil
 	}
-	
+
 	// 查找当前跳在路径中的位置
 	for i, hop := range hops {
 		if hop == currentHop {
@@ -216,7 +216,7 @@ func (pe *PathEncoder) getNextHopFromSimplePath(hops []string, currentHop string
 			return hops[i+1], nil
 		}
 	}
-	
+
 	return "", fmt.Errorf("current hop %s not found in path", currentHop)
 }
 
@@ -225,12 +225,12 @@ func (pe *PathEncoder) getNextHopFromComplexPath(complexPath *ComplexPath, curre
 	if complexPath == nil || len(complexPath.Hops) == 0 {
 		return "", fmt.Errorf("empty complex path")
 	}
-	
+
 	// 如果当前跳为空，返回第一跳
 	if currentHop == "" {
 		return complexPath.Hops[0].Address, nil
 	}
-	
+
 	// 查找当前跳
 	for i, hop := range complexPath.Hops {
 		if hop.Address == currentHop {
@@ -242,20 +242,20 @@ func (pe *PathEncoder) getNextHopFromComplexPath(complexPath *ComplexPath, curre
 			return complexPath.Hops[i+1].Address, nil
 		}
 	}
-	
+
 	return "", fmt.Errorf("current hop %s not found in complex path", currentHop)
 }
 
 // ComplexPath 复杂路径信息
 type ComplexPath struct {
-	Hops                []PathHop `json:"hops"`
-	FinalTarget         string    `json:"final_target"`
-	Priority            uint8     `json:"priority"`
-	TTL                 uint8     `json:"ttl"`
-	RequireEncryption   bool      `json:"require_encryption"`
-	RequireCompression  bool      `json:"require_compression"`
-	QoSRequirements     *QoS      `json:"qos_requirements,omitempty"`
-	LoadBalancingHints  []string  `json:"load_balancing_hints,omitempty"`
+	Hops               []PathHop `json:"hops"`
+	FinalTarget        string    `json:"final_target"`
+	Priority           uint8     `json:"priority"`
+	TTL                uint8     `json:"ttl"`
+	RequireEncryption  bool      `json:"require_encryption"`
+	RequireCompression bool      `json:"require_compression"`
+	QoSRequirements    *QoS      `json:"qos_requirements,omitempty"`
+	LoadBalancingHints []string  `json:"load_balancing_hints,omitempty"`
 }
 
 // PathHop 路径跳点
@@ -275,7 +275,7 @@ type QoS struct {
 // DecodedPath 解码后的路径
 type DecodedPath struct {
 	Type        PathType     `json:"type"`
-	Hops        []string     `json:"hops,omitempty"`        // 简单路径
+	Hops        []string     `json:"hops,omitempty"`         // 简单路径
 	ComplexPath *ComplexPath `json:"complex_path,omitempty"` // 复杂路径
 	Priority    uint8        `json:"priority"`
 	TTL         uint8        `json:"ttl"`
