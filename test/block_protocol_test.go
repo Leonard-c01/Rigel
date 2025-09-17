@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/rigel/internal/protocol"
 )
 
-func TestBlockProtocolBasic() {
+func TestBlockProtocolBasic(t *testing.T) {
 	fmt.Println("🧪 测试基本块协议功能")
 
 	// 创建客户端
@@ -197,17 +197,4 @@ func TestBlockProtocolPartialData(t *testing.T) {
 	}
 
 	fmt.Println("✅ 部分数据处理测试通过！")
-}
-
-func main() {
-	fmt.Println("🚀 块协议单元测试")
-	fmt.Println("=" + fmt.Sprintf("%60s", "="))
-
-	t := &testing.T{}
-
-	TestBlockProtocolBasic(t)
-	TestBlockProtocolMultiple(t)
-	TestBlockProtocolPartialData(t)
-
-	fmt.Println("\n🎉 所有测试通过！")
 }

@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/rigel/config"
-	"github.com/rigel/internal/proxy"
 	"github.com/rigel/pkg/log"
 )
 
@@ -164,15 +163,12 @@ func testParallelConnectionPerformance(t *testing.T, duration time.Duration, tes
 
 	// 创建支持并行连接的代理
 	cfg := createProxyConfig("127.0.0.1:0", server.Addr().String())
-	proxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create proxy: %v", err)
-	}
+	testProxy := NewTestProxy(cfg)
 
-	if err := proxy.Start(); err != nil {
+	if err := testProxy.Start(); err != nil {
 		t.Fatalf("Failed to start proxy: %v", err)
 	}
-	defer proxy.Stop()
+	defer testProxy.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -189,15 +185,12 @@ func testMultiplexConnectionPerformance(t *testing.T, duration time.Duration, te
 
 	// 创建支持多路复用的代理
 	cfg := createProxyConfig("127.0.0.1:0", server.Addr().String())
-	proxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create proxy: %v", err)
-	}
+	testProxy := NewTestProxy(cfg)
 
-	if err := proxy.Start(); err != nil {
+	if err := testProxy.Start(); err != nil {
 		t.Fatalf("Failed to start proxy: %v", err)
 	}
-	defer proxy.Stop()
+	defer testProxy.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -212,15 +205,12 @@ func testHybridConnectionPerformance(t *testing.T, duration time.Duration, testD
 
 	// 创建支持混合连接的代理
 	cfg := createProxyConfig("127.0.0.1:0", server.Addr().String())
-	proxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create proxy: %v", err)
-	}
+	testProxy := NewTestProxy(cfg)
 
-	if err := proxy.Start(); err != nil {
+	if err := testProxy.Start(); err != nil {
 		t.Fatalf("Failed to start proxy: %v", err)
 	}
-	defer proxy.Stop()
+	defer testProxy.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 

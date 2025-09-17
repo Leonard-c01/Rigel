@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/rigel/config"
-	"github.com/rigel/internal/proxy"
 	"github.com/rigel/pkg/log"
 )
 
@@ -44,10 +43,7 @@ func TestMultiplexProxyIntegration(t *testing.T) {
 	}
 
 	// 创建并启动动态代理
-	multiplexProxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create multiplex proxy: %v", err)
-	}
+	multiplexProxy := NewTestProxy(cfg)
 
 	if err := multiplexProxy.Start(); err != nil {
 		t.Fatalf("Failed to start multiplex proxy: %v", err)
@@ -108,15 +104,12 @@ func TestConnectionModeSelection(t *testing.T) {
 	}
 
 	// 创建并启动代理
-	proxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create proxy: %v", err)
-	}
+	testProxy := NewTestProxy(cfg)
 
-	if err := proxy.Start(); err != nil {
+	if err := testProxy.Start(); err != nil {
 		t.Fatalf("Failed to start proxy: %v", err)
 	}
-	defer proxy.Stop()
+	defer testProxy.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -185,15 +178,12 @@ func TestMultiplexConcurrency(t *testing.T) {
 	}
 
 	// 创建并启动代理
-	proxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create proxy: %v", err)
-	}
+	testProxy := NewTestProxy(cfg)
 
-	if err := proxy.Start(); err != nil {
+	if err := testProxy.Start(); err != nil {
 		t.Fatalf("Failed to start proxy: %v", err)
 	}
-	defer proxy.Stop()
+	defer testProxy.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -244,7 +234,7 @@ func TestMultiplexConcurrency(t *testing.T) {
 	}
 
 	// 检查最终统计
-	stats := proxy.GetStats()
+	stats := testProxy.GetStats()
 	t.Logf("Final proxy stats: %+v", stats)
 }
 

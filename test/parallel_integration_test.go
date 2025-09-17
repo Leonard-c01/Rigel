@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/rigel/config"
-	"github.com/rigel/internal/proxy"
 	"github.com/rigel/pkg/log"
 )
 
@@ -44,10 +43,7 @@ func TestParallelProxyIntegration(t *testing.T) {
 	}
 
 	// 创建并启动动态代理
-	parallelProxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create parallel proxy: %v", err)
-	}
+	parallelProxy := NewTestProxy(cfg)
 
 	if err := parallelProxy.Start(); err != nil {
 		t.Fatalf("Failed to start parallel proxy: %v", err)
@@ -112,15 +108,12 @@ func TestParallelProxyThroughput(t *testing.T) {
 	}
 
 	// 创建并启动代理
-	proxy, err := proxy.NewUnifiedProxy(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create proxy: %v", err)
-	}
+	testProxy := NewTestProxy(cfg)
 
-	if err := proxy.Start(); err != nil {
+	if err := testProxy.Start(); err != nil {
 		t.Fatalf("Failed to start proxy: %v", err)
 	}
-	defer proxy.Stop()
+	defer testProxy.Stop()
 
 	time.Sleep(100 * time.Millisecond)
 
@@ -153,7 +146,7 @@ func TestParallelProxyThroughput(t *testing.T) {
 		transferCount, elapsed, throughputMBps)
 
 	// 检查最终统计
-	stats := proxy.GetStats()
+	stats := testProxy.GetStats()
 	t.Logf("Final proxy stats: %+v", stats)
 
 	if transferCount == 0 {

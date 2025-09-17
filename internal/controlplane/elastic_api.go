@@ -24,10 +24,10 @@ func NewElasticAPI(controller *ElasticController, port string) *ElasticAPI {
 		controller: controller,
 		router:     mux.NewRouter(),
 	}
-	
+
 	// 设置路由
 	api.setupRoutes()
-	
+
 	// 创建HTTP服务器
 	api.server = &http.Server{
 		Addr:         port,
@@ -35,7 +35,7 @@ func NewElasticAPI(controller *ElasticController, port string) *ElasticAPI {
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
-	
+
 	return api
 }
 
@@ -43,25 +43,25 @@ func NewElasticAPI(controller *ElasticController, port string) *ElasticAPI {
 func (api *ElasticAPI) setupRoutes() {
 	// 基础路由
 	api.router.HandleFunc("/health", api.healthCheck).Methods("GET")
-	
+
 	// 统计信息路由
 	api.router.HandleFunc("/api/v1/elastic/stats", api.getStats).Methods("GET")
 	api.router.HandleFunc("/api/v1/elastic/state-stats", api.getStateStats).Methods("GET")
-	
+
 	// 节点状态路由
 	api.router.HandleFunc("/api/v1/elastic/nodes", api.getAllNodes).Methods("GET")
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}", api.getNode).Methods("GET")
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}/costs", api.updateNodeCosts).Methods("PUT")
-	
+
 	// 决策和历史路由
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}/decision", api.makeDecision).Methods("POST")
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}/simulate", api.simulateDecision).Methods("POST")
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}/history/decisions", api.getDecisionHistory).Methods("GET")
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}/history/transitions", api.getTransitionHistory).Methods("GET")
-	
+
 	// 强制操作路由
 	api.router.HandleFunc("/api/v1/elastic/nodes/{nodeId}/force-scaling", api.forceScaling).Methods("POST")
-	
+
 	// 云实例路由
 	api.router.HandleFunc("/api/v1/elastic/cloud/instances", api.getCloudInstances).Methods("GET")
 	api.router.HandleFunc("/api/v1/elastic/cloud/providers", api.getCloudProviders).Methods("GET")
@@ -106,9 +106,9 @@ func (api *ElasticAPI) getAllNodes(w http.ResponseWriter, r *http.Request) {
 	// 检查查询参数
 	query := r.URL.Query()
 	filter := query.Get("filter")
-	
+
 	var nodes map[string]*ElasticNodeInfo
-	
+
 	switch filter {
 	case "active":
 		nodes = api.controller.GetActiveNodes()
@@ -117,7 +117,7 @@ func (api *ElasticAPI) getAllNodes(w http.ResponseWriter, r *http.Request) {
 	default:
 		nodes = api.controller.GetAllNodeStates()
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, nodes)
 }
 
@@ -125,13 +125,13 @@ func (api *ElasticAPI) getAllNodes(w http.ResponseWriter, r *http.Request) {
 func (api *ElasticAPI) getNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	nodeInfo, exists := api.controller.GetNodeState(nodeID)
 	if !exists {
 		api.writeErrorResponse(w, http.StatusNotFound, fmt.Sprintf("Node %s not found", nodeID))
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, nodeInfo)
 }
 
@@ -139,22 +139,22 @@ func (api *ElasticAPI) getNode(w http.ResponseWriter, r *http.Request) {
 func (api *ElasticAPI) updateNodeCosts(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	var request struct {
 		FixedCost    float64 `json:"fixed_cost"`
 		VariableCost float64 `json:"variable_cost"`
 	}
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		api.writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	
+
 	if err := api.controller.UpdateNodeCosts(nodeID, request.FixedCost, request.VariableCost); err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, map[string]string{"message": "Node costs updated successfully"})
 }
 
@@ -162,22 +162,22 @@ func (api *ElasticAPI) updateNodeCosts(w http.ResponseWriter, r *http.Request) {
 func (api *ElasticAPI) makeDecision(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	var request struct {
 		VirtualQueue float64 `json:"virtual_queue"`
 	}
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		api.writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	
+
 	decision, err := api.controller.ProcessScalingRequest(nodeID, request.VirtualQueue)
 	if err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, decision)
 }
 
@@ -185,22 +185,22 @@ func (api *ElasticAPI) makeDecision(w http.ResponseWriter, r *http.Request) {
 func (api *ElasticAPI) simulateDecision(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	var request struct {
 		VirtualQueue float64 `json:"virtual_queue"`
 	}
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		api.writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	
+
 	decision, err := api.controller.SimulateDecision(nodeID, request.VirtualQueue)
 	if err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, decision)
 }
 
@@ -208,13 +208,13 @@ func (api *ElasticAPI) simulateDecision(w http.ResponseWriter, r *http.Request) 
 func (api *ElasticAPI) getDecisionHistory(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	history, exists := api.controller.GetDecisionHistory(nodeID)
 	if !exists {
 		api.writeErrorResponse(w, http.StatusNotFound, fmt.Sprintf("No decision history found for node %s", nodeID))
 		return
 	}
-	
+
 	// 支持分页
 	query := r.URL.Query()
 	limit := 50 // 默认限制
@@ -223,11 +223,11 @@ func (api *ElasticAPI) getDecisionHistory(w http.ResponseWriter, r *http.Request
 			limit = l
 		}
 	}
-	
+
 	if len(history) > limit {
 		history = history[len(history)-limit:]
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, history)
 }
 
@@ -235,13 +235,13 @@ func (api *ElasticAPI) getDecisionHistory(w http.ResponseWriter, r *http.Request
 func (api *ElasticAPI) getTransitionHistory(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	history, exists := api.controller.GetTransitionHistory(nodeID)
 	if !exists {
 		api.writeErrorResponse(w, http.StatusNotFound, fmt.Sprintf("No transition history found for node %s", nodeID))
 		return
 	}
-	
+
 	// 支持分页
 	query := r.URL.Query()
 	limit := 50 // 默认限制
@@ -250,11 +250,11 @@ func (api *ElasticAPI) getTransitionHistory(w http.ResponseWriter, r *http.Reque
 			limit = l
 		}
 	}
-	
+
 	if len(history) > limit {
 		history = history[len(history)-limit:]
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, history)
 }
 
@@ -262,26 +262,26 @@ func (api *ElasticAPI) getTransitionHistory(w http.ResponseWriter, r *http.Reque
 func (api *ElasticAPI) forceScaling(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeID := vars["nodeId"]
-	
+
 	var request struct {
 		TargetState ElasticNodeState `json:"target_state"`
 		Reason      string           `json:"reason"`
 	}
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		api.writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	
+
 	if request.Reason == "" {
 		request.Reason = "Manual force scaling via API"
 	}
-	
+
 	if err := api.controller.ForceScaling(nodeID, request.TargetState, request.Reason); err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, map[string]string{"message": "Force scaling executed successfully"})
 }
 
@@ -289,13 +289,13 @@ func (api *ElasticAPI) forceScaling(w http.ResponseWriter, r *http.Request) {
 func (api *ElasticAPI) getCloudInstances(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	
+
 	instances, err := api.controller.GetCloudInstances(ctx)
 	if err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, instances)
 }
 
@@ -312,18 +312,18 @@ func (api *ElasticAPI) getCloudProviders(w http.ResponseWriter, r *http.Request)
 func (api *ElasticAPI) addCloudProvider(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	providerName := vars["providerName"]
-	
+
 	var config CloudProviderConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
 		api.writeErrorResponse(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	
+
 	if err := api.controller.AddCloudProvider(providerName, &config); err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, map[string]string{"message": "Cloud provider added successfully"})
 }
 
@@ -331,12 +331,12 @@ func (api *ElasticAPI) addCloudProvider(w http.ResponseWriter, r *http.Request) 
 func (api *ElasticAPI) removeCloudProvider(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	providerName := vars["providerName"]
-	
+
 	if err := api.controller.RemoveCloudProvider(providerName); err != nil {
 		api.writeErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	api.writeJSONResponse(w, http.StatusOK, map[string]string{"message": "Cloud provider removed successfully"})
 }
 

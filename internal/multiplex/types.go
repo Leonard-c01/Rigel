@@ -12,39 +12,39 @@ import (
 // MultiplexConfig 多路复用配置
 type MultiplexConfig struct {
 	// smux配置
-	KeepAliveInterval    time.Duration `json:"keep_alive_interval"`    // 心跳间隔
-	KeepAliveTimeout     time.Duration `json:"keep_alive_timeout"`     // 心跳超时
-	MaxFrameSize         int           `json:"max_frame_size"`         // 最大帧大小
-	MaxReceiveBuffer     int           `json:"max_receive_buffer"`     // 最大接收缓冲区
-	MaxStreamBuffer      int           `json:"max_stream_buffer"`      // 最大流缓冲区
-	
+	KeepAliveInterval time.Duration `json:"keep_alive_interval"` // 心跳间隔
+	KeepAliveTimeout  time.Duration `json:"keep_alive_timeout"`  // 心跳超时
+	MaxFrameSize      int           `json:"max_frame_size"`      // 最大帧大小
+	MaxReceiveBuffer  int           `json:"max_receive_buffer"`  // 最大接收缓冲区
+	MaxStreamBuffer   int           `json:"max_stream_buffer"`   // 最大流缓冲区
+
 	// 会话管理配置
 	MaxStreamsPerSession int           `json:"max_streams_per_session"` // 每个会话最大流数
-	SessionTimeout       time.Duration `json:"session_timeout"`        // 会话超时
-	StreamTimeout        time.Duration `json:"stream_timeout"`         // 流超时
-	
+	SessionTimeout       time.Duration `json:"session_timeout"`         // 会话超时
+	StreamTimeout        time.Duration `json:"stream_timeout"`          // 流超时
+
 	// 连接池配置
-	MaxSessions          int           `json:"max_sessions"`           // 最大会话数
-	MinSessions          int           `json:"min_sessions"`           // 最小会话数
-	SessionIdleTimeout   time.Duration `json:"session_idle_timeout"`  // 会话空闲超时
+	MaxSessions        int           `json:"max_sessions"`         // 最大会话数
+	MinSessions        int           `json:"min_sessions"`         // 最小会话数
+	SessionIdleTimeout time.Duration `json:"session_idle_timeout"` // 会话空闲超时
 }
 
 // DefaultMultiplexConfig 默认多路复用配置
 func DefaultMultiplexConfig() *MultiplexConfig {
 	return &MultiplexConfig{
-		KeepAliveInterval:    30 * time.Second,
-		KeepAliveTimeout:     90 * time.Second,
-		MaxFrameSize:         32768, // 32KB
-		MaxReceiveBuffer:     4194304, // 4MB
-		MaxStreamBuffer:      65536, // 64KB
-		
+		KeepAliveInterval: 30 * time.Second,
+		KeepAliveTimeout:  90 * time.Second,
+		MaxFrameSize:      32768,   // 32KB
+		MaxReceiveBuffer:  4194304, // 4MB
+		MaxStreamBuffer:   65536,   // 64KB
+
 		MaxStreamsPerSession: 256,
 		SessionTimeout:       5 * time.Minute,
 		StreamTimeout:        30 * time.Second,
-		
-		MaxSessions:          10,
-		MinSessions:          2,
-		SessionIdleTimeout:   2 * time.Minute,
+
+		MaxSessions:        10,
+		MinSessions:        2,
+		SessionIdleTimeout: 2 * time.Minute,
 	}
 }
 
@@ -145,15 +145,15 @@ func (ms *MuxSession) GetStreamCount() int32 {
 func (ms *MuxSession) IsHealthy() bool {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
-	
+
 	if ms.Session == nil || ms.Session.IsClosed() {
 		return false
 	}
-	
+
 	if ms.Status == SessionStatusClosed || ms.Status == SessionStatusClosing {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -189,44 +189,44 @@ func (ms *MuxStream) GetStats() (int64, int64) {
 type SessionManager interface {
 	// CreateSession 创建新会话
 	CreateSession(ctx context.Context, target string) (*MuxSession, error)
-	
+
 	// GetSession 获取可用会话
 	GetSession(target string) (*MuxSession, error)
-	
+
 	// ReturnSession 归还会话
 	ReturnSession(session *MuxSession)
-	
+
 	// CloseSession 关闭会话
 	CloseSession(sessionID string) error
-	
+
 	// GetStats 获取会话管理器统计
 	GetStats() *SessionManagerStats
-	
+
 	// Close 关闭会话管理器
 	Close() error
 }
 
 // SessionManagerStats 会话管理器统计
 type SessionManagerStats struct {
-	TotalSessions   int   `json:"total_sessions"`
-	ActiveSessions  int   `json:"active_sessions"`
-	IdleSessions    int   `json:"idle_sessions"`
-	TotalStreams    int32 `json:"total_streams"`
-	TotalBytesSent  int64 `json:"total_bytes_sent"`
-	TotalBytesRecv  int64 `json:"total_bytes_recv"`
+	TotalSessions  int   `json:"total_sessions"`
+	ActiveSessions int   `json:"active_sessions"`
+	IdleSessions   int   `json:"idle_sessions"`
+	TotalStreams   int32 `json:"total_streams"`
+	TotalBytesSent int64 `json:"total_bytes_sent"`
+	TotalBytesRecv int64 `json:"total_bytes_recv"`
 }
 
 // StreamManager 流管理器接口
 type StreamManager interface {
 	// OpenStream 打开新流
 	OpenStream(sessionID string) (*MuxStream, error)
-	
+
 	// CloseStream 关闭流
 	CloseStream(streamID string) error
-	
+
 	// GetStream 获取流
 	GetStream(streamID string) (*MuxStream, error)
-	
+
 	// GetStats 获取流管理器统计
 	GetStats() *StreamManagerStats
 }
@@ -243,34 +243,34 @@ type StreamManagerStats struct {
 type MultiplexConnection interface {
 	// Connect 建立多路复用连接
 	Connect(ctx context.Context, target string) error
-	
+
 	// OpenStream 打开新的逻辑流
 	OpenStream() (net.Conn, error)
-	
+
 	// Send 发送数据（自动选择或创建流）
 	Send(data []byte) error
-	
+
 	// Receive 接收数据
 	Receive() ([]byte, error)
-	
+
 	// Close 关闭多路复用连接
 	Close() error
-	
+
 	// GetStats 获取统计信息
 	GetStats() *MultiplexStats
-	
+
 	// Scale 动态调整会话数
 	Scale(targetSessions int) error
 }
 
 // MultiplexStats 多路复用统计
 type MultiplexStats struct {
-	SessionCount    int                    `json:"session_count"`
-	StreamCount     int32                  `json:"stream_count"`
-	TotalBytesSent  int64                  `json:"total_bytes_sent"`
-	TotalBytesRecv  int64                  `json:"total_bytes_recv"`
-	SessionStats    *SessionManagerStats   `json:"session_stats"`
-	StreamStats     *StreamManagerStats    `json:"stream_stats"`
+	SessionCount   int                  `json:"session_count"`
+	StreamCount    int32                `json:"stream_count"`
+	TotalBytesSent int64                `json:"total_bytes_sent"`
+	TotalBytesRecv int64                `json:"total_bytes_recv"`
+	SessionStats   *SessionManagerStats `json:"session_stats"`
+	StreamStats    *StreamManagerStats  `json:"stream_stats"`
 }
 
 // ConnectionMode 连接模式
